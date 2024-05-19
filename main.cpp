@@ -28,7 +28,7 @@ struct empty_type {};
 
 template<typename T, typename U, typename ...Pack>
 struct type_pos_ {
-  static constexpr int value = 1 + type_pos_<T, Pack...>::value; // T = vector<double> Pack...
+  static constexpr int value = 1 + type_pos_<T, Pack...>::value;
 };
 
 template<typename T, typename ...Pack> //
@@ -43,12 +43,12 @@ struct type_pos_<T, empty_type> {
 
 template<typename T, typename ...Pack>
 struct type_pos_rec {
-  static constexpr int value = type_pos_<T, Pack..., empty_type>::value;  // T = vector<double>, Pack = (int, char, vector<int>, list<double>)
+  static constexpr int value = type_pos_<T, Pack..., empty_type>::value;
 };
 
 template <typename ...Pack, typename T>
-int index_of_rec(T value) {
-  auto pos = type_pos_rec<T, Pack...>::value;           // T = vector<double>, Pack = (int, char, vector<int>, list<double>)
+int index_of_rec(T) {
+  auto pos = type_pos_rec<T, Pack...>::value;
   return pos >= sizeof...(Pack)? -1: pos;
 }
 
@@ -56,10 +56,13 @@ void ejemplo_index_of_rec() {
   // Ejemplo 1
   char var1{};
   std::cout << index_of_rec<int, char>(var1) << std::endl;
+  // Ejemplo 2
   std::vector<int> var3;
   std::cout << index_of_rec<int, char, std::vector<int>, std::list<double>>(var3) << std::endl;
+  // Ejemplo 3
   std::string var2;
   std::cout << index_of_rec<int, char, double, float, std::string>(var2) << std::endl;
+  // Ejemplo 4
   std::vector<double> var4;
   std::cout << index_of_rec<int, char, std::vector<int>, std::list<double>>(var4) << std::endl; // El resultado seria: -1
 }
@@ -73,38 +76,40 @@ auto sumar(Pack...params) {
 }
 
 //-------------------------------------------------------------------------------------
-template<typename T, typename ...Pack>
-struct type_pos {
-  static constexpr int find_index() {
-    int index = 0;
-    auto increase_index = [&index] { ++index; return false; };
-    bool found = ( (std::is_same_v<T, Pack> || increase_index()) || ...);
-    return found ? index: -1;
-  }
-  static constexpr int value = find_index();
-};
-
 template <typename ...Pack, typename T>
-int index_of(T value) {
-  return type_pos<T, Pack...>::value;
+constexpr int index_of(T) {
+  int index = 0;
+  auto increase_index = [&index] { ++index; return false; };
+  bool found = ( (std::is_same_v<T, Pack> || increase_index()) || ...);
+  return found ? index: -1;
 }
 
 void ejemplo_index_of() {
   // Ejemplo 1
   char var1{};
   std::cout << index_of<int, char>(var1) << std::endl;
+  // Ejemplo 2
   std::vector<int> var3;
   std::cout << index_of<int, char, std::vector<int>, std::list<double>>(var3) << std::endl;
+  // Ejemplo 3
   std::string var2;
   std::cout << index_of<int, char, double, float, std::string>(var2) << std::endl;
+  // Ejemplo 4
   std::vector<double> var4;
   std::cout << index_of<int, char, std::vector<int>, std::list<double>>(var4) << std::endl; // El resultado seria: -1
 }
 
 //-------------------------------------------------------------------------------------
+// Este ejemplo muestra una de las characteristics del operador OR que evalúa los predicados hasta que encuentre
+// uno verdadero (true).
+// En el ejemplo el predicado verdadero aparece en el segundo predicado por tanto el valor del index = 1 y result = true
+// Si todos los predicados fueran falsos:
+// Ejemplo: bool result = (++index, false) || (++index, false) || (++index, false) || (++index, false);
+// En este ejemplo todos los predicados se evaluarían, por tanto, index = 4 y result = false.
+// Esta técnica se usa en la última solución de index_of.
 void ejemplo_uso_or() {
   int index = 0;
-  bool result = (++index, false) || (++index, false) || (++index, false) || (++index, false);
+  bool result = (++index, false) || true || (++index, false) || (++index, false);
   std::cout << std::boolalpha << index;
 }
 
@@ -112,8 +117,8 @@ void ejemplo_uso_or() {
 
 int main() {
 //  ejemplo_buscar_dato();
-  ejemplo_index_of_rec();
-//  ejemplo_index_of();
+//  ejemplo_index_of_rec();
+  ejemplo_index_of();
 //  ejemplo_uso_or();
   return 0;
 }
